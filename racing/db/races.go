@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,9 @@ type RacesRepo interface {
 
 	// List will return a list of races.
 	List(filter *racing.ListRacesRequestFilter) ([]*racing.Race, error)
+
+	// GetRace will return a race collection by id
+	GetRace(req *racing.GetRaceRequest) (*racing.Race, error)
 }
 
 type racesRepo struct {
@@ -135,4 +139,54 @@ func (r *racesRepo) scanRaces(rows *sql.Rows) ([]*racing.Race, error) {
 	}
 
 	return races, nil
+}
+
+func (r *racesRepo) GetRace(req *racing.GetRaceRequest) (*racing.Race, error) {
+	var (
+		err   error
+		query string
+	)
+
+	query = getRaceQueries()[racesList]
+
+	if req.Id > 0 {
+		id := strconv.Itoa(int(req.Id))
+		query += " WHERE id=" + id
+	}
+
+	row, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.scanRace(row)
+}
+
+func (r *racesRepo) scanRace(row *sql.Rows) (*racing.Race, error) {
+	var advertisedStart time.Time
+	race := &racing.Race{}
+
+	for row.Next() {
+		if err := row.Scan(&race.Id, &race.MeetingId, &race.Name, &race.Number, &race.Visible, &advertisedStart); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+
+			return nil, err
+		}
+
+		ts, err := ptypes.TimestampProto(advertisedStart)
+		if err != nil {
+			return nil, err
+		}
+
+		race.AdvertisedStartTime = ts
+		if time.Now().Unix() > ts.AsTime().Unix() {
+			race.Status = "CLOSED"
+		} else {
+			race.Status = "OPEN"
+		}
+	}
+
+	return race, nil
 }
