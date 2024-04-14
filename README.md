@@ -128,6 +128,70 @@ curl -X GET 'http://localhost:8000/v1/race?id=57' \
 -H 'Content-Type: application/json'
 ```
 
+10. In another terminal window, start the new sports service...
+
+```bash
+cd ./sports
+
+go build && ./sports
+➜ INFO[0000] API server listening on: localhost:9002
+```
+
+11. Make a request for get the list-events filter visible and advertised_start_time asc
+
+```bash
+curl -X POST 'http://localhost:8000/v1/list-events' \
+-H 'Content-Type: application/json' \
+-d $'{
+    "filter": {
+        "visible":true,
+        "column":"advertised_start_time",
+        "order_by": "asc"
+    }
+}'
+```
+
+12. Make a request for get the list-events filter visible and start_time desc
+
+```bash
+curl -X POST 'http://localhost:8000/v1/list-events' \
+-H 'Content-Type: application/json' \
+-d $'{
+    "filter": {
+        "visible":true,
+        "column":"start_time",
+        "order_by": "desc"
+    }
+}'
+```
+
+13. Make a request for get the list-events filter visible and name desc
+
+```bash
+curl -X POST 'http://localhost:8000/v1/list-events' \
+-H 'Content-Type: application/json' \
+-d $'{
+    "filter": {
+        "visible":true,
+        "column":"name",
+        "order_by": "desc"
+    }
+}'
+```
+
+14. Make a request for get the list-events with filter event id and visible
+
+```bash
+curl -X POST 'http://localhost:8000/v1/list-events' \
+-H 'Content-Type: application/json' \
+-d $'{
+    "filter": {
+        "visible":true,
+        "id":68
+    }
+}'
+```
+
 ### Changes/Updates Required
 
 - We'd like to see you push this repository up to **GitHub/Gitlab/Bitbucket** and lodge a **Pull/Merge Request for each** of the below tasks.
