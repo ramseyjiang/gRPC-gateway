@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -87,9 +88,7 @@ func (r *racesRepo) applyFilter(query string, filter *racing.ListRacesRequestFil
 	return query, args
 }
 
-func (m *racesRepo) scanRaces(
-	rows *sql.Rows,
-) ([]*racing.Race, error) {
+func (r *racesRepo) scanRaces(rows *sql.Rows) ([]*racing.Race, error) {
 	var races []*racing.Race
 
 	for rows.Next() {
@@ -97,7 +96,8 @@ func (m *racesRepo) scanRaces(
 		var advertisedStart time.Time
 
 		if err := rows.Scan(&race.Id, &race.MeetingId, &race.Name, &race.Number, &race.Visible, &advertisedStart); err != nil {
-			if err == sql.ErrNoRows {
+			// replace "err == sql.ErrNoRows" to errors.Is, it is a built-in function.
+			if errors.Is(err, sql.ErrNoRows) {
 				return nil, nil
 			}
 
