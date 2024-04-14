@@ -107,6 +107,20 @@ curl -X POST 'http://localhost:8000/v1/list-races' \
 }'
 ```
 
+8. Make a request for order by advertised_start_time desc, with a new field status, all data status is CLOSED.
+
+```bash
+curl -X POST 'http://localhost:8000/v1/list-races' \
+-H 'Content-Type: application/json' \
+-d $'{
+    "filter": {
+        "visible":true,
+        "column":"advertised_start_time",
+        "order_by": "desc"
+    }
+}'
+```
+
 ### Changes/Updates Required
 
 - We'd like to see you push this repository up to **GitHub/Gitlab/Bitbucket** and lodge a **Pull/Merge Request for each** of the below tasks.

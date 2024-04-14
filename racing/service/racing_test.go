@@ -5,17 +5,19 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 )
 
 type Race struct {
 	ID                  string `json:"id"`
-	MeetingID           int    `json:"meetingId"`
+	MeetingID           string `json:"meetingId"`
 	Name                string `json:"name"`
 	Number              string `json:"number"`
 	Visible             bool   `json:"visible"`
 	AdvertisedStartTime string `json:"advertisedStartTime"`
+	Status              string `json:"status"`
 }
 
 type listRacesResponse struct {
@@ -36,6 +38,7 @@ const (
 	caseName3 = "Filtered visible and meeting_ids"
 	caseName4 = "Filtered visible true and advertised_start_time order by asc"
 	caseName5 = "Filtered visible true and advertised_start_time order by desc"
+	caseName6 = "Filtered visible true, advertised_start_time order by desc, all status is CLOSED"
 )
 
 var meetingIDs = []int{3, 8}
@@ -83,6 +86,16 @@ func TestListRaces(t *testing.T) {
 			},
 			expectedLen: 54,
 		},
+		{
+			name: caseName6,
+			url:  apiHost + "v1/list-races",
+			filter: map[string]interface{}{
+				"visible":  true,
+				"column":   "advertised_start_time",
+				"order_by": "desc",
+			},
+			expectedLen: 54,
+		},
 	}
 
 	for _, tt := range tests {
@@ -117,8 +130,9 @@ func TestListRaces(t *testing.T) {
 					}
 
 					// "slices.Contains" requires go1.18 or later (-lang was set to go1.16, so I create contains function below.
-					if !contains(meetingIDs, v.MeetingID) {
-						t.Errorf("Unexpected filtered response meeting ID is %v in : expected %v", v.MeetingID, meetingIDs)
+					mID, _ := strconv.Atoi(v.MeetingID)
+					if !contains(meetingIDs, mID) {
+						t.Errorf("Unexpected filtered response meeting ID is %v in : expected %v", mID, meetingIDs)
 						return
 					}
 				}
@@ -158,6 +172,29 @@ func TestListRaces(t *testing.T) {
 							t.Errorf("Unexpected filtered response advertised_start_time: %v (expected %v)", v.AdvertisedStartTime, resp.Races[k+1].AdvertisedStartTime)
 							return
 						}
+					}
+				}
+			}
+
+			if tt.name == caseName6 {
+				for k, v := range resp.Races {
+					if v.Visible == false {
+						t.Errorf("Unexpected filtered response visible: %v (expected %v)", v.Visible, true)
+						return
+					}
+
+					if k+1 != len(resp.Races) {
+						time1, _ := time.Parse(time.RFC3339, v.AdvertisedStartTime)
+						time2, _ := time.Parse(time.RFC3339, resp.Races[k+1].AdvertisedStartTime)
+						if time1.Before(time2) {
+							t.Errorf("Unexpected filtered response advertised_start_time: %v (expected %v)", v.AdvertisedStartTime, resp.Races[k+1].AdvertisedStartTime)
+							return
+						}
+					}
+
+					if v.Status != "CLOSED" {
+						t.Errorf("Unexpected filtered response status: %v (expected %v)", v.Status, "CLOSED")
+						return
 					}
 				}
 			}
