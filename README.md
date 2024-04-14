@@ -80,6 +80,33 @@ curl -X POST 'http://localhost:8000/v1/list-races' \
 }'
 ```
 
+6. Make a request for visible and meeting_ids
+
+```bash
+curl -X POST 'http://localhost:8000/v1/list-races' \
+-H 'Content-Type: application/json' \
+-d $'{
+    "filter": {
+        "visible":true,
+        "meeting_ids": [3,8]
+    }
+}'
+```
+
+7. Make a request for order by advertised_start_time asc
+
+```bash
+curl -X POST 'http://localhost:8000/v1/list-races' \
+-H 'Content-Type: application/json' \
+-d $'{
+    "filter": {
+        "visible":true,
+        "column":"advertised_start_time",
+        "order_by": "asc"
+    }
+}'
+```
+
 ### Changes/Updates Required
 
 - We'd like to see you push this repository up to **GitHub/Gitlab/Bitbucket** and lodge a **Pull/Merge Request for each** of the below tasks.
