@@ -6,11 +6,12 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 )
 
 type Race struct {
 	ID                  string `json:"id"`
-	MeetingID           string `json:"meetingId"`
+	MeetingID           int    `json:"meetingId"`
 	Name                string `json:"name"`
 	Number              string `json:"number"`
 	Visible             bool   `json:"visible"`
@@ -32,7 +33,12 @@ const (
 	apiHost   = "http://localhost:8000/"
 	caseName1 = "No filtered"
 	caseName2 = "Filtered visible true"
+	caseName3 = "Filtered visible and meeting_ids"
+	caseName4 = "Filtered visible true and advertised_start_time order by asc"
+	caseName5 = "Filtered visible true and advertised_start_time order by desc"
 )
+
+var meetingIDs = []int{3, 8}
 
 func TestListRaces(t *testing.T) {
 	tests := []listRacesTestCase{
@@ -43,9 +49,38 @@ func TestListRaces(t *testing.T) {
 			expectedLen: 100,
 		},
 		{
-			name:        "Filtered visible true",
+			name:        caseName2,
 			url:         apiHost + "v1/list-races",
 			filter:      map[string]interface{}{"visible": true},
+			expectedLen: 54,
+		},
+		{
+			name: caseName3,
+			url:  apiHost + "v1/list-races",
+			filter: map[string]interface{}{
+				"visible":     true,
+				"meeting_ids": meetingIDs,
+			},
+			expectedLen: 14,
+		},
+		{
+			name: caseName4,
+			url:  apiHost + "v1/list-races",
+			filter: map[string]interface{}{
+				"visible":  true,
+				"column":   "advertised_start_time",
+				"order_by": "asc",
+			},
+			expectedLen: 54,
+		},
+		{
+			name: caseName5,
+			url:  apiHost + "v1/list-races",
+			filter: map[string]interface{}{
+				"visible":  true,
+				"column":   "advertised_start_time",
+				"order_by": "desc",
+			},
 			expectedLen: 54,
 		},
 	}
@@ -69,6 +104,60 @@ func TestListRaces(t *testing.T) {
 					if v.Visible == false {
 						t.Errorf("Unexpected filtered response visible: %v (expected %v)", v.Visible, true)
 						return
+					}
+				}
+			}
+
+			// fmt.Println(tt.name, len(resp.Races))
+			if tt.name == caseName3 && tt.expectedLen == len(resp.Races) {
+				for _, v := range resp.Races {
+					if v.Visible == false {
+						t.Errorf("Unexpected filtered response visible: %v (expected %v)", v.Visible, true)
+						return
+					}
+
+					// "slices.Contains" requires go1.18 or later (-lang was set to go1.16, so I create contains function below.
+					if !contains(meetingIDs, v.MeetingID) {
+						t.Errorf("Unexpected filtered response meeting ID is %v in : expected %v", v.MeetingID, meetingIDs)
+						return
+					}
+				}
+			}
+
+			if tt.name == caseName4 && tt.expectedLen == len(resp.Races) {
+				for k, v := range resp.Races {
+					if v.Visible == false {
+						t.Errorf("Unexpected filtered response visible: %v (expected %v)", v.Visible, true)
+						return
+					}
+
+					// check all data is asc, compare current and next data's AdvertisedStartTime
+					if k+1 != len(resp.Races) {
+						time1, _ := time.Parse(time.RFC3339, v.AdvertisedStartTime)
+						time2, _ := time.Parse(time.RFC3339, resp.Races[k+1].AdvertisedStartTime)
+						if time1.After(time2) {
+							t.Errorf("Unexpected filtered response advertised_start_time: %v (expected %v)", v.AdvertisedStartTime, resp.Races[k+1].AdvertisedStartTime)
+							return
+						}
+					}
+				}
+			}
+
+			if tt.name == caseName5 && tt.expectedLen == len(resp.Races) {
+				for k, v := range resp.Races {
+					if v.Visible == false {
+						t.Errorf("Unexpected filtered response visible: %v (expected %v)", v.Visible, true)
+						return
+					}
+
+					// check all data is desc, compare current and next data's AdvertisedStartTime
+					if k+1 != len(resp.Races) {
+						time1, _ := time.Parse(time.RFC3339, v.AdvertisedStartTime)
+						time2, _ := time.Parse(time.RFC3339, resp.Races[k+1].AdvertisedStartTime)
+						if time1.Before(time2) {
+							t.Errorf("Unexpected filtered response advertised_start_time: %v (expected %v)", v.AdvertisedStartTime, resp.Races[k+1].AdvertisedStartTime)
+							return
+						}
 					}
 				}
 			}
@@ -104,4 +193,13 @@ func makePostRequest(url string, requestBody interface{}) (*listRacesResponse, e
 	}
 
 	return listResp, nil
+}
+
+func contains(meetingIDs []int, meetingID int) bool {
+	for _, id := range meetingIDs {
+		if id == meetingID {
+			return true
+		}
+	}
+	return false
 }
