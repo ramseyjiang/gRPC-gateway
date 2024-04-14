@@ -31,6 +31,7 @@ type listRacesTestCase struct {
 const (
 	apiHost   = "http://localhost:8000/"
 	caseName1 = "No filtered"
+	caseName2 = "Filtered visible true"
 )
 
 func TestListRaces(t *testing.T) {
@@ -40,6 +41,12 @@ func TestListRaces(t *testing.T) {
 			url:         apiHost + "v1/list-races",
 			filter:      map[string]interface{}{},
 			expectedLen: 100,
+		},
+		{
+			name:        "Filtered visible true",
+			url:         apiHost + "v1/list-races",
+			filter:      map[string]interface{}{"visible": true},
+			expectedLen: 54,
 		},
 	}
 
@@ -55,6 +62,15 @@ func TestListRaces(t *testing.T) {
 			if tt.name == caseName1 && tt.expectedLen != len(resp.Races) {
 				t.Errorf("Unexpected unfiltered response length: %d (expected %d)", len(resp.Races), tt.expectedLen)
 				return
+			}
+
+			if tt.name == caseName2 && tt.expectedLen == len(resp.Races) {
+				for _, v := range resp.Races {
+					if v.Visible == false {
+						t.Errorf("Unexpected filtered response visible: %v (expected %v)", v.Visible, true)
+						return
+					}
+				}
 			}
 		})
 	}

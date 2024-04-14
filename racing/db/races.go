@@ -52,7 +52,6 @@ func (r *racesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race,
 	)
 
 	query = getRaceQueries()[racesList]
-
 	query, args = r.applyFilter(query, filter)
 
 	rows, err := r.db.Query(query, args...)
@@ -71,6 +70,10 @@ func (r *racesRepo) applyFilter(query string, filter *racing.ListRacesRequestFil
 
 	if filter == nil {
 		return query, args
+	}
+
+	if filter.Visible == true {
+		clauses = append(clauses, "visible = 1")
 	}
 
 	if len(filter.MeetingIds) > 0 {
