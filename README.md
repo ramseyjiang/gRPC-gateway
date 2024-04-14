@@ -192,6 +192,20 @@ curl -X POST 'http://localhost:8000/v1/list-events' \
 }'
 ```
 
+15. In the terminal, go to racing/service or sports/service, run unittests
+```bash
+cd ./racing/service
+
+go test . -v
+```
+> ![](https://github.com/ramseyjiang/entain-master/blob/sports/racing/racing_service_test_result.png)
+```bash
+cd ./sports/service
+
+go test . -v
+```
+> ![](https://github.com/ramseyjiang/entain-master/blob/sports/sports/sports_service_test_results.png)
+
 ### Changes/Updates Required
 
 - We'd like to see you push this repository up to **GitHub/Gitlab/Bitbucket** and lodge a **Pull/Merge Request for each** of the below tasks.
