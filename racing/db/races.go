@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -51,7 +52,6 @@ func (r *racesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race,
 	)
 
 	query = getRaceQueries()[racesList]
-
 	query, args = r.applyFilter(query, filter)
 
 	rows, err := r.db.Query(query, args...)
@@ -72,6 +72,10 @@ func (r *racesRepo) applyFilter(query string, filter *racing.ListRacesRequestFil
 		return query, args
 	}
 
+	if filter.Visible == true {
+		clauses = append(clauses, "visible = 1")
+	}
+
 	if len(filter.MeetingIds) > 0 {
 		clauses = append(clauses, "meeting_id IN ("+strings.Repeat("?,", len(filter.MeetingIds)-1)+"?)")
 
@@ -87,9 +91,7 @@ func (r *racesRepo) applyFilter(query string, filter *racing.ListRacesRequestFil
 	return query, args
 }
 
-func (m *racesRepo) scanRaces(
-	rows *sql.Rows,
-) ([]*racing.Race, error) {
+func (r *racesRepo) scanRaces(rows *sql.Rows) ([]*racing.Race, error) {
 	var races []*racing.Race
 
 	for rows.Next() {
@@ -97,7 +99,8 @@ func (m *racesRepo) scanRaces(
 		var advertisedStart time.Time
 
 		if err := rows.Scan(&race.Id, &race.MeetingId, &race.Name, &race.Number, &race.Visible, &advertisedStart); err != nil {
-			if err == sql.ErrNoRows {
+			// replace "err == sql.ErrNoRows" to errors.Is, it is a built-in function.
+			if errors.Is(err, sql.ErrNoRows) {
 				return nil, nil
 			}
 

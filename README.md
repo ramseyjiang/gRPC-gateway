@@ -68,6 +68,18 @@ curl -X "POST" "http://localhost:8000/v1/list-races" \
 }'
 ```
 
+5. Make a request for list-races filter with visible.
+
+```bash
+curl -X POST 'http://localhost:8000/v1/list-races' \
+-H 'Content-Type: application/json' \
+-d $'{
+    "filter": {
+        "visible":true
+    }
+}'
+```
+
 ### Changes/Updates Required
 
 - We'd like to see you push this repository up to **GitHub/Gitlab/Bitbucket** and lodge a **Pull/Merge Request for each** of the below tasks.
