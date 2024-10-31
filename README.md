@@ -1,8 +1,4 @@
-## Entain BE Technical Test
-
-This test has been designed to demonstrate your ability and understanding of technologies commonly used at Entain. 
-
-Please treat the services provided as if they would live in a real-world environment.
+## gRPC-gateway Example
 
 ### Directory Structure
 
@@ -11,7 +7,7 @@ Please treat the services provided as if they would live in a real-world environ
 - `sports`: A very bare-bones sports service.
 
 ```
-entain/
+grpc-gateway/
 ├─ api/
 │  ├─ proto/
 │  ├─ main.go
